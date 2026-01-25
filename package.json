@@ -1,8 +1,9 @@
 {
   "name": "edugreen-web",
-  "private": true,
+  "private": false,
   "version": "0.0.0",
   "type": "module",
+  "author": "Héctor Rodríguez",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
