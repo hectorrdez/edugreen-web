@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import ButtonLink from "../composables/controls/ButtonLink";
+import HeaderLogo from "../assets/isologo-w.png";
+import ButtonLink from "../composables/controls/LinkButton";
 import useAuth from "../contexts/AuthContext";
 import Row from "../layouts/row/Row";
 import Section from "../layouts/Section";
-import HeaderLogo from "../assets/isologo-w.png";
+import LinkButton from "../composables/controls/LinkButton";
 
 export default function Header() {
   const { isLogged } = useAuth();
@@ -29,8 +30,8 @@ export default function Header() {
                   </li>
                 ) : (
                   <li className="flex gap-2">
-                    <ButtonLink to="/login">Iniciar sesión</ButtonLink>
-                    <ButtonLink to="/register">Registrarse</ButtonLink>
+                    <LinkButton to="/login">Iniciar sesión</LinkButton>
+                    <LinkButton to="/register">Registrarse</LinkButton>
                   </li>
                 )}
               </Row>

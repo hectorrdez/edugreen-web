@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
-export default function ButtonLink({
-  href,
+export default function LinkButton({
+  to,
   children,
   className = null,
   ...props
@@ -13,7 +13,7 @@ export default function ButtonLink({
     .join(" ")
     .trim();
   return (
-    <Link to={href} className={newClassName} {...props}>
+    <Link to={to} className={newClassName} {...props}>
       {children}
     </Link>
   );
