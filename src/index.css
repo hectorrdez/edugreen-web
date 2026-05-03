@@ -1,0 +1,49 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@layer base {
+    body {
+        font-family: "Inter", sans-serif;
+    }
+}
+
+@theme {
+    --color-primary: #12ea36;
+    --text-color-secondary: #4d535e;
+    --radius-logo: 10px;
+
+    /* Header */
+    --background-color-header: #0a1f0d;
+    --text-color-header: #9ca3af;
+
+    /* Main */
+    --background-color-main: #f6f8f6;
+
+    /* Footer */
+    --background-color-footer: #000000;
+    --text-color-footer: #ffffff;
+    --text-color-footer-secondary: #9ca3af;
+
+    /* Buttons */
+    --background-color-button-primary: #12ea36;
+    --text-color-button-primary: #000000;
+    --min-height-button: 44px;
+    --min-width-button: 44px;
+    --radius-button: 15px;
+
+    /* Secondary Button */
+    --background-color-button-secondary: #ffffff;
+    --border-color-button-secondary: #e5e7eb;
+
+    /* Inputs */
+    --min-height-input: 44px;
+    --min-width-input: 44px;
+    --background-color-input: #ffffff;
+
+    /* Links */
+    --min-height-link: 44px;
+    --min-width-link: 44px;
+
+    /* Cards */
+    --background-color-card: #fffcf5;
+}
