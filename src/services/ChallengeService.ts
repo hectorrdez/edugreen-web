@@ -9,6 +9,7 @@ export interface ChallengeData {
   points: number;
   auto_enroll: boolean;
   participants: number;
+  progress: number;
   end_date: string | null;
   created_at: string;
   updated_at: string;

@@ -6,6 +6,7 @@ export interface UserData {
   lastName: string;
   email: string;
   role: "student" | "teacher" | "admin";
+  points: number;
   institution_id: string | null;
   created_at: string | null;
   updated_at: string | null;

@@ -21,10 +21,7 @@ import ClassService from "@/services/ClassService";
 import EnrollmentService from "@/services/EnrollmentService";
 import StatsService from "@/services/StatsService";
 import UserService, { type UserData } from "@/services/UserService";
-import type {
-  ChallengeStatsData,
-  RankingEntryData,
-} from "@/services/StatsService";
+import type { RankingEntryData } from "@/services/StatsService";
 
 type MemberRow = {
   user_id: string;
@@ -175,12 +172,35 @@ function formatDate(iso: string | null) {
   });
 }
 
+function formatFullDate(iso: string) {
+  return new Date(iso).toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function timeRemaining(iso: string): string {
+  const diff = new Date(iso).getTime() - Date.now();
+  if (diff <= 0) return "Finalizado";
+  const minutes = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days = Math.floor(diff / 86_400_000);
+  if (days >= 1)
+    return `${days} día${days !== 1 ? "s" : ""} restante${days !== 1 ? "s" : ""}`;
+  if (hours >= 1)
+    return `${hours} hora${hours !== 1 ? "s" : ""} restante${hours !== 1 ? "s" : ""}`;
+  return `${minutes} min restante${minutes !== 1 ? "s" : ""}`;
+}
+
 export default function ChallengeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const auth = useAuth();
 
   const [challenge, setChallenge] = useState<ChallengeData | null>(null);
-  const [stats, setStats] = useState<ChallengeStatsData | null>(null);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [tutorId, setTutorId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -207,32 +227,20 @@ export default function ChallengeDetailPage() {
       try {
         const ch = await ChallengeService.getOne(id, sessionToken);
         setChallenge(ch);
+        console.log(ch);
 
-        const [challengeStats, enrollmentsRes, rankingRes, classData] =
-          await Promise.all([
-            StatsService.getByChallenge(id, sessionToken).catch(() => null),
-            EnrollmentService.getByChallenge(id, sessionToken).catch(() => ({
-              data: [],
-            })),
-            StatsService.getRanking(ch.class_id, sessionToken).catch(() => ({
-              data: [],
-            })),
-            ClassService.getOne(ch.class_id, sessionToken).catch(() => null),
-          ]);
+        const [enrollmentsRes, rankingRes, classData] = await Promise.all([
+          EnrollmentService.getByChallenge(id, sessionToken).catch(() => []),
+          StatsService.getRanking(ch.class_id, sessionToken).catch(() => ({
+            data: [],
+          })),
+          ClassService.getOne(ch.class_id, sessionToken).catch(() => null),
+        ]);
 
-        setStats(challengeStats);
         setTutorId(classData?.tutor_id ?? null);
-        console.log("classData", classData);
-        console.log("enrollmentsRes", enrollmentsRes);
-        console.log("rankingRes", rankingRes);
 
         const enrollments = enrollmentsRes ?? [];
         const ranking: RankingEntryData[] = rankingRes.data ?? [];
-        const completions = challengeStats?.completions ?? [];
-
-        console.log("enrollments", enrollments);
-        console.log("ranking", ranking);
-        console.log("completions", completions);
 
         // Users absent from class ranking (no points yet) need a direct profile fetch
         const rankingIds = new Set(ranking.map((r) => r.user_id));
@@ -252,13 +260,12 @@ export default function ChallengeDetailPage() {
 
         const rows: MemberRow[] = enrollments.map((e) => {
           const rankUser = ranking.find((r) => r.user_id === e.user_id);
-          const completion = completions.find((c) => c.user_id === e.user_id);
           return {
             user_id: e.user_id,
             name: rankUser
               ? `${rankUser.name} ${rankUser.lastName}`
               : (profileMap.get(e.user_id) ?? e.user_id),
-            points: completion?.points ?? null,
+            points: e.completed_at !== null ? ch.points : null,
             completed_at: e.completed_at,
           };
         });
@@ -280,6 +287,7 @@ export default function ChallengeDetailPage() {
   const isOwner =
     currentRole === "admin" || (!!tutorId && currentId === tutorId);
   const isEnrolled = members.some((m) => m.user_id === currentId);
+  const completedCount = members.filter((m) => m.completed_at !== null).length;
 
   async function handleJoin() {
     if (!id || !currentId || !auth?.auth?.sessionToken) return;
@@ -290,6 +298,9 @@ export default function ChallengeDetailPage() {
         ...prev,
         { user_id: currentId, name: "Tú", points: null, completed_at: null },
       ]);
+      setChallenge((prev) =>
+        prev ? { ...prev, participants: prev.participants + 1 } : prev,
+      );
     } catch {
       // silently fail — server will reject if already enrolled
     } finally {
@@ -311,8 +322,16 @@ export default function ChallengeDetailPage() {
     setAddError(null);
     setAddFoundUsers([]);
     try {
-      const results = (await UserService.searchStudents(addQuery.trim(), auth.auth.sessionToken)).data ?? [];
-      const notEnrolled = results.filter((u) => !members.some((m) => m.user_id === u.id));
+      const results =
+        (
+          await UserService.searchStudents(
+            addQuery.trim(),
+            auth.auth.sessionToken,
+          )
+        ).data ?? [];
+      const notEnrolled = results.filter(
+        (u) => !members.some((m) => m.user_id === u.id),
+      );
       if (notEnrolled.length === 0) {
         setAddError(
           results.length === 0
@@ -337,7 +356,12 @@ export default function ChallengeDetailPage() {
       await EnrollmentService.enroll(user.id, id, auth.auth.sessionToken);
       setMembers((prev) => [
         ...prev,
-        { user_id: user.id, name: `${user.name} ${user.lastName}`, points: null, completed_at: null },
+        {
+          user_id: user.id,
+          name: `${user.name} ${user.lastName}`,
+          points: null,
+          completed_at: null,
+        },
       ]);
       setChallenge((prev) =>
         prev ? { ...prev, participants: prev.participants + 1 } : prev,
@@ -361,7 +385,6 @@ export default function ChallengeDetailPage() {
     const wasCompleted = m.completed_at !== null;
     const pts = challenge?.points ?? 0;
 
-    // Optimistic update — members
     setMembers((prev) =>
       prev.map((r) =>
         r.user_id === m.user_id
@@ -373,21 +396,6 @@ export default function ChallengeDetailPage() {
           : r,
       ),
     );
-    // Optimistic update — aside stats
-    setStats((prev) =>
-      prev
-        ? {
-            ...prev,
-            total_completions: prev.total_completions + (wasCompleted ? -1 : 1),
-            completions: wasCompleted
-              ? prev.completions.filter((c) => c.user_id !== m.user_id)
-              : [
-                  ...prev.completions,
-                  { user_id: m.user_id, points: pts, earned_at: new Date().toISOString() },
-                ],
-          }
-        : prev,
-    );
 
     try {
       if (wasCompleted) {
@@ -396,22 +404,7 @@ export default function ChallengeDetailPage() {
         await EnrollmentService.complete(m.user_id, id, sessionToken);
       }
     } catch {
-      // Revert both on failure
       setMembers((prev) => prev.map((r) => (r.user_id === m.user_id ? m : r)));
-      setStats((prev) =>
-        prev
-          ? {
-              ...prev,
-              total_completions: prev.total_completions + (wasCompleted ? 1 : -1),
-              completions: wasCompleted
-                ? [
-                    ...prev.completions,
-                    { user_id: m.user_id, points: pts, earned_at: m.completed_at ?? "" },
-                  ]
-                : prev.completions.filter((c) => c.user_id !== m.user_id),
-            }
-          : prev,
-      );
     } finally {
       setMemberLoading(m.user_id, false);
     }
@@ -422,46 +415,20 @@ export default function ChallengeDetailPage() {
     setMemberLoading(m.user_id, true);
     const wasCompleted = m.completed_at !== null;
 
-    // Optimistic update — members
     setMembers((prev) => prev.filter((r) => r.user_id !== m.user_id));
-    // Optimistic update — aside stats
     setChallenge((prev) =>
-      prev ? { ...prev, participants: Math.max(0, prev.participants - 1) } : prev,
+      prev
+        ? { ...prev, participants: Math.max(0, prev.participants - 1) }
+        : prev,
     );
-    if (wasCompleted) {
-      setStats((prev) =>
-        prev
-          ? {
-              ...prev,
-              total_completions: Math.max(0, prev.total_completions - 1),
-              completions: prev.completions.filter((c) => c.user_id !== m.user_id),
-            }
-          : prev,
-      );
-    }
 
     try {
       await EnrollmentService.unenroll(m.user_id, id, auth.auth.sessionToken);
     } catch {
-      // Revert all on failure
       setMembers((prev) => [...prev, m]);
       setChallenge((prev) =>
         prev ? { ...prev, participants: prev.participants + 1 } : prev,
       );
-      if (wasCompleted) {
-        setStats((prev) =>
-          prev
-            ? {
-                ...prev,
-                total_completions: prev.total_completions + 1,
-                completions: [
-                  ...prev.completions,
-                  { user_id: m.user_id, points: m.points ?? 0, earned_at: m.completed_at ?? "" },
-                ],
-              }
-            : prev,
-        );
-      }
     } finally {
       setMemberLoading(m.user_id, false);
     }
@@ -530,17 +497,36 @@ export default function ChallengeDetailPage() {
                     <div className="flex items-center gap-2">
                       <IconCheck size={15} />
                       <span>
-                        {stats?.total_completions ?? 0} completado
-                        {(stats?.total_completions ?? 0) !== 1 ? "s" : ""}
+                        {completedCount} completado
+                        {completedCount !== 1 ? "s" : ""}
                       </span>
                     </div>
-                    <span>Creado: {formatDate(challenge.created_at)}</span>
-                    <span>
-                      Cierre:{" "}
-                      {challenge.end_date
-                        ? formatDate(challenge.end_date)
-                        : "Sin fecha límite"}
+                    <span
+                      title={formatFullDate(challenge.created_at)}
+                      className="cursor-help"
+                    >
+                      Creado: {formatDate(challenge.created_at)}
                     </span>
+                    {challenge.end_date ? (
+                      <span
+                        title={formatFullDate(challenge.end_date)}
+                        className="cursor-help"
+                      >
+                        Cierre: {formatDate(challenge.end_date)}
+                        {" · "}
+                        <span
+                          className={
+                            new Date(challenge.end_date) <= new Date()
+                              ? "text-red-500 font-medium"
+                              : "text-primary font-medium"
+                          }
+                        >
+                          {timeRemaining(challenge.end_date)}
+                        </span>
+                      </span>
+                    ) : (
+                      <span>Cierre: Sin fecha límite</span>
+                    )}
                   </div>
                   {!isOwner && !isEnrolled && !isLoading && (
                     <button
@@ -644,7 +630,28 @@ export default function ChallengeDetailPage() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-secondary hidden sm:table-cell">
-                            {formatDate(m.completed_at)}
+                            <span
+                              title={
+                                m.completed_at
+                                  ? new Date(m.completed_at).toLocaleString(
+                                      "es-ES",
+                                      {
+                                        day: "2-digit",
+                                        month: "long",
+                                        year: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                        second: "2-digit",
+                                      },
+                                    )
+                                  : undefined
+                              }
+                              className={
+                                m.completed_at ? "cursor-help" : undefined
+                              }
+                            >
+                              {formatDate(m.completed_at)}
+                            </span>
                           </td>
                           {isOwner && (
                             <td className="px-4 py-3">
@@ -672,14 +679,17 @@ export default function ChallengeDetailPage() {
         onClose={closeAddModal}
         title="Añadir participante"
       >
-        <form onSubmit={handleSearchParticipant} className="flex flex-col gap-3">
+        <form
+          onSubmit={handleSearchParticipant}
+          className="flex flex-col gap-3"
+        >
           <div className="flex gap-2">
             <input
               type="search"
               value={addQuery}
               onChange={(e) => setAddQuery(e.target.value)}
               placeholder="Buscar por email o nombre…"
-              className="flex-1 text-sm rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 text-sm rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary w-full"
             />
             <button
               type="submit"
@@ -689,9 +699,7 @@ export default function ChallengeDetailPage() {
               {addSearching ? "Buscando…" : "Buscar"}
             </button>
           </div>
-          {addError && (
-            <p className="text-sm text-red-600">{addError}</p>
-          )}
+          {addError && <p className="text-sm text-red-600">{addError}</p>}
           {addFoundUsers.length > 0 && (
             <div className="flex flex-col gap-2 mt-1">
               {addFoundUsers.map((user) => (

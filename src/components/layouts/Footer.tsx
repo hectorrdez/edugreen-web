@@ -12,6 +12,25 @@ import Column from "../placing/Column";
 import Row from "../placing/Row";
 
 export default function Footer() {
+  const PLATFORM_LINKS = [
+    { label: "Sobre Nosotros", to: getRoute("about") },
+    { label: "Cómo Funciona", to: getRoute("how-it-works") },
+    { label: "Para Profesores", to: getRoute("for-teachers") },
+    // { label: "Precios", to: getRoute("contribute") },
+  ];
+
+  const RESOURCE_LINKS = [
+    // { label: "Blog", to: getRoute("blog") },
+    // { label: "Guías de Reciclaje", to: getRoute("guides") },
+    { label: "Webinars", to: getRoute("media") },
+    // { label: "Soporte", to: getRoute("support") },
+  ];
+
+  const LEGAL_LINKS = [
+    { label: "Privacidad", to: getRoute("privacy") },
+    { label: "Términos", to: getRoute("use-terms") },
+    { label: "Cookies", to: getRoute("cookies") },
+  ];
   const [newsLetterState, setNewLetterState] = useState({ email: "" });
   const { notify } = useNotification();
 
@@ -61,25 +80,21 @@ export default function Footer() {
             <Column className="flex-1 gap-2">
               <FooterTitle>Plataforma</FooterTitle>
               <ul>
-                <FooterLink to={getRoute("about")}>Sobre Nosotros</FooterLink>
-                <FooterLink to={getRoute("how-it-works")}>
-                  Cómo Funciona
-                </FooterLink>
-                <FooterLink to={getRoute("for-teachers")}>
-                  Para Profesores
-                </FooterLink>
-                <FooterLink to={getRoute("contribute")}>Precios</FooterLink>
+                {PLATFORM_LINKS.map(({ label, to }) => (
+                  <FooterLink key={to} to={to}>
+                    {label}
+                  </FooterLink>
+                ))}
               </ul>
             </Column>
             <Column className="flex-1 gap-2">
               <FooterTitle>Recursos</FooterTitle>
               <ul>
-                <FooterLink to={getRoute("blog")}>Blog</FooterLink>
-                <FooterLink to={getRoute("guides")}>
-                  Guías de Reciclaje
-                </FooterLink>
-                <FooterLink to={getRoute("media")}>Webinars</FooterLink>
-                <FooterLink to={getRoute("support")}>Soporte</FooterLink>
+                {RESOURCE_LINKS.map(({ label, to }) => (
+                  <FooterLink key={to} to={to}>
+                    {label}
+                  </FooterLink>
+                ))}
               </ul>
             </Column>
             <Column className="flex-1 gap-2">
@@ -110,9 +125,11 @@ export default function Footer() {
             <p>© 2026 Edugreen. Todos los derechos reservados</p>
             <ul>
               <Row className="gap-6">
-                <FooterLink to={getRoute("privacy")}>Privacidad</FooterLink>
-                <FooterLink to={getRoute("use-terms")}>Términos</FooterLink>
-                <FooterLink to={getRoute("cookies")}>Cookies</FooterLink>
+                {LEGAL_LINKS.map(({ label, to }) => (
+                  <FooterLink key={to} to={to}>
+                    {label}
+                  </FooterLink>
+                ))}
               </Row>
             </ul>
           </Row>

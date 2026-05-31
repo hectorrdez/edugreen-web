@@ -25,10 +25,10 @@ export default class EnrollmentService {
   }
 
   static getByUser(user_id: string, sessionToken: string) {
-    return ApiClient.get<{ data: EnrollmentData[] }>(`/enrollment/user/${user_id}`, sessionToken);
+    return ApiClient.get<EnrollmentData[]>(`/enrollment/user/${user_id}`, sessionToken);
   }
 
   static getByChallenge(challenge_id: string, sessionToken: string) {
-    return ApiClient.get<{ data: EnrollmentData[] }>(`/enrollment/challenge/${challenge_id}`, sessionToken);
+    return ApiClient.get<EnrollmentData[]>(`/enrollment/challenge/${challenge_id}`, sessionToken);
   }
 }

@@ -1,5 +1,6 @@
-import { IconMedal, IconMedal2, IconTrophy } from "@tabler/icons-react";
+import { IconEye, IconMedal, IconMedal2, IconTrophy } from "@tabler/icons-react";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Skeleton from "../../components/feedback/Skeleton";
 import SearchBar from "../../components/inputs/SearchBar";
 import Page from "../../components/layouts/Page";
@@ -136,6 +137,7 @@ export default function RankingPage() {
   const auth = useAuth();
   const { user } = useUser() ?? {};
   const { notify } = useNotification();
+  const navigate = useNavigate();
 
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [selectedClassId, setSelectedClassId] = useState("");
@@ -306,6 +308,12 @@ export default function RankingPage() {
                     <span className="text-sm font-semibold shrink-0">
                       {entry.total_points} pts
                     </span>
+                    <button
+                      onClick={() => navigate(`/profile/${entry.id}`)}
+                      className="ml-2 text-secondary hover:text-primary transition-colors shrink-0"
+                    >
+                      <IconEye size={16} />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -319,7 +327,7 @@ export default function RankingPage() {
                 value={search}
                 onChange={setSearch}
                 placeholder="Buscar alumno..."
-                className="max-w-xs"
+                className="w-full"
               />
             </div>
 
@@ -337,13 +345,14 @@ export default function RankingPage() {
                     <th className="text-right px-4 py-3 font-semibold text-secondary pr-5">
                       Puntos
                     </th>
+                    <th className="px-4 py-3 w-10" />
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={3}
+                        colSpan={4}
                         className="text-center text-secondary py-10"
                       >
                         No se encontraron alumnos.
@@ -392,6 +401,14 @@ export default function RankingPage() {
                         </td>
                         <td className="px-4 py-3 text-right pr-5 font-semibold">
                           {entry.total_points}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => navigate(`/profile/${entry.id}`)}
+                            className="text-secondary hover:text-primary transition-colors"
+                          >
+                            <IconEye size={16} />
+                          </button>
                         </td>
                       </tr>
                     ))
