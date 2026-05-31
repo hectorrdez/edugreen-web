@@ -9,6 +9,8 @@ export interface ChallengeData {
   points: number;
   auto_enroll: boolean;
   participants: number;
+  progress: number;
+  end_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +21,7 @@ export interface ChallengeCreatePayload {
   description?: string;
   image?: string;
   points?: number;
+  end_date?: string;
 }
 
 export interface ChallengeUpdatePayload {
@@ -26,6 +29,7 @@ export interface ChallengeUpdatePayload {
   description?: string;
   image?: string | null;
   points?: number;
+  end_date?: string | null;
 }
 
 export default class ChallengeService {

@@ -14,19 +14,22 @@ import SearchBar from "../../components/inputs/SearchBar";
 import Page from "../../components/layouts/Page";
 import useAuth from "../../contexts/AccessContext";
 import useUser from "../../contexts/UserContext";
-import ChallengeService, { type ChallengeData } from "../../services/ChallengeService";
+import ChallengeService, {
+  type ChallengeData,
+} from "../../services/ChallengeService";
 import ClassService from "../../services/ClassService";
 import UserClassService from "../../services/UserClassService";
 import type { ClassWithJoinDate } from "../../services/UserClassService";
 import UserService from "../../services/UserService";
 
-type StatusFilter = "all" | "available" | "in_progress" | "completed";
+type StatusFilter = "all" | "available" | "in_progress" | "completed" | "ended";
 
 const FILTER_OPTIONS: { label: string; value: StatusFilter }[] = [
   { label: "Todos", value: "all" },
   { label: "Disponibles", value: "available" },
   { label: "En curso", value: "in_progress" },
   { label: "Completados", value: "completed" },
+  { label: "Finalizados", value: "ended" },
 ];
 
 type DisplayChallenge = {
@@ -38,6 +41,8 @@ type DisplayChallenge = {
   class_id: string;
   status: "available" | "in_progress" | "completed";
   participants: number;
+  progress: number;
+  end_date: string | null;
 };
 
 export default function ChallengesPage() {
@@ -127,6 +132,8 @@ export default function ChallengesPage() {
             class_id: ch.class_id,
             status: enrollment?.status ?? "available",
             participants: ch.participants,
+            progress: ch.progress,
+            end_date: ch.end_date,
           };
         });
 
@@ -143,8 +150,12 @@ export default function ChallengesPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const now = new Date();
     return challenges.filter((c) => {
-      if (filter !== "all" && c.status !== filter) return false;
+      const ended = c.end_date !== null && new Date(c.end_date) < now;
+      if (filter === "ended" && !ended) return false;
+      if (filter !== "all" && filter !== "ended" && c.status !== filter)
+        return false;
       if (
         q &&
         !c.challenge_name.toLowerCase().includes(q) &&
@@ -155,8 +166,16 @@ export default function ChallengesPage() {
     });
   }, [challenges, filter, search]);
 
-  const enrolledChallenges = filtered.filter((c) => c.status !== "available");
-  const availableChallenges = filtered.filter((c) => c.status === "available");
+  const now = new Date();
+  const isEnded = (c: DisplayChallenge) =>
+    c.end_date !== null && new Date(c.end_date) < now;
+  const endedChallenges = filtered.filter(isEnded);
+  const enrolledChallenges = filtered.filter(
+    (c) => c.status !== "available" && !isEnded(c),
+  );
+  const availableChallenges = filtered.filter(
+    (c) => c.status === "available" && !isEnded(c),
+  );
 
   const isTeacher = user?.role === "teacher" || user?.role === "admin";
 
@@ -172,6 +191,8 @@ export default function ChallengesPage() {
         class_id: challenge.class_id,
         status: "available",
         participants: 0,
+        progress: 0,
+        end_date: challenge.end_date,
       },
       ...prev,
     ]);
@@ -194,10 +215,10 @@ export default function ChallengesPage() {
             placeholder="Buscar retos..."
             className="w-full sm:max-w-sm"
           />
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative flex items-center" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen((o) => !o)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors h-full cursor-pointer ${
                 filter !== "all"
                   ? "bg-primary border-primary text-black"
                   : "bg-white border-gray-200 text-secondary hover:border-primary hover:text-primary"
@@ -215,6 +236,9 @@ export default function ChallengesPage() {
             </button>
             {dropdownOpen && (
               <div className="absolute top-full mt-1 left-0 z-20 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[160px]">
+                <p className="px-4 pt-2 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  Estado
+                </p>
                 {FILTER_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
@@ -246,15 +270,47 @@ export default function ChallengesPage() {
           <p className="text-center text-secondary py-16">
             No tienes retos asignados todavía.
           </p>
-        ) : enrolledChallenges.length === 0 && availableChallenges.length === 0 ? (
+        ) : endedChallenges.length === 0 &&
+          enrolledChallenges.length === 0 &&
+          availableChallenges.length === 0 ? (
           <p className="text-center text-secondary py-16">
             No se encontraron retos con esos criterios.
           </p>
         ) : (
           <div className="flex flex-col gap-10">
+            {endedChallenges.length > 0 && (
+              <section>
+                <h2 className="text-lg font-semibold mb-4 text-gray-500">
+                  Finalizados
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center opacity-70">
+                  {endedChallenges.map((c) => (
+                    <ChallengeCard
+                      key={c.challenge_id}
+                      imageSrc={
+                        c.image
+                          ? `${import.meta.env.VITE_API_IMAGE}${c.image}`
+                          : `https://picsum.photos/seed/${c.challenge_id}/400/225`
+                      }
+                      typeOfChallenge="Reto"
+                      title={c.challenge_name}
+                      points={c.points}
+                      classProgress={c.progress}
+                      participants={c.participants}
+                      link={`/challenge/${c.challenge_id}`}
+                      tag="Finalizado"
+                    >
+                      {c.description}
+                    </ChallengeCard>
+                  ))}
+                </div>
+              </section>
+            )}
             {enrolledChallenges.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold mb-4">Mis inscripciones</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Mis inscripciones
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
                   {enrolledChallenges.map((c) => (
                     <ChallengeCard
@@ -267,10 +323,12 @@ export default function ChallengesPage() {
                       typeOfChallenge="Reto"
                       title={c.challenge_name}
                       points={c.points}
-                      classProgress={c.status === "completed" ? 100 : 50}
+                      classProgress={c.progress}
                       participants={c.participants}
                       link={`/challenge/${c.challenge_id}`}
-                      tag={c.status === "completed" ? "Completado" : "En progreso"}
+                      tag={
+                        c.status === "completed" ? "Completado" : "En progreso"
+                      }
                     >
                       {c.description}
                     </ChallengeCard>
@@ -281,7 +339,9 @@ export default function ChallengesPage() {
 
             {availableChallenges.length > 0 && (
               <section>
-                <h2 className="text-lg font-semibold mb-4">Disponibles en tu clase</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Disponibles en tu clase
+                </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
                   {availableChallenges.map((c) => (
                     <ChallengeCard
@@ -294,7 +354,7 @@ export default function ChallengesPage() {
                       typeOfChallenge="Reto"
                       title={c.challenge_name}
                       points={c.points}
-                      classProgress={0}
+                      classProgress={c.progress}
                       participants={c.participants}
                       link={`/challenge/${c.challenge_id}`}
                       tag="Disponible"

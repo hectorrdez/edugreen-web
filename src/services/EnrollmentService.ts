@@ -20,11 +20,15 @@ export default class EnrollmentService {
     return ApiClient.patch<{ message: string }>("/enrollment/complete", { user_id, challenge_id }, sessionToken);
   }
 
+  static uncomplete(user_id: string, challenge_id: string, sessionToken: string) {
+    return ApiClient.patch<{ message: string }>("/enrollment/uncomplete", { user_id, challenge_id }, sessionToken);
+  }
+
   static getByUser(user_id: string, sessionToken: string) {
-    return ApiClient.get<{ data: EnrollmentData[] }>(`/enrollment/user/${user_id}`, sessionToken);
+    return ApiClient.get<EnrollmentData[]>(`/enrollment/user/${user_id}`, sessionToken);
   }
 
   static getByChallenge(challenge_id: string, sessionToken: string) {
-    return ApiClient.get<{ data: EnrollmentData[] }>(`/enrollment/challenge/${challenge_id}`, sessionToken);
+    return ApiClient.get<EnrollmentData[]>(`/enrollment/challenge/${challenge_id}`, sessionToken);
   }
 }

@@ -10,6 +10,7 @@ import {
   IconBook,
   IconChartBar,
   IconCheck,
+  IconEye,
   IconLayoutDashboard,
   IconMail,
   IconPencil,
@@ -19,6 +20,7 @@ import {
   IconTrash,
   IconUsers,
 } from "@tabler/icons-react";
+import { Link } from "react-router-dom";
 import Page from "@components/layouts/Page";
 import Button from "@components/controls/Button";
 import Input from "@components/inputs/Input";
@@ -840,6 +842,13 @@ function ChallengeManager({
                       </Row>
                     ) : (
                       <Row className="justify-end gap-1">
+                        <Link
+                          to={`/challenge/${challenge.id}`}
+                          className="text-muted-foreground hover:text-primary transition-colors p-1 rounded"
+                          title="Ver reto"
+                        >
+                          <IconEye size={16} />
+                        </Link>
                         <button
                           onClick={() => setEditingChallenge(challenge)}
                           className="text-muted-foreground hover:text-primary transition-colors p-1 rounded"
