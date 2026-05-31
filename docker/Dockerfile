@@ -12,6 +12,7 @@ ENV VITE_API_URL=$VITE_API_URL \
 RUN npm run build
 
 FROM node:22-alpine
+LABEL name="edugreen-pre-web"
 WORKDIR /app
 RUN npm install -g serve
 COPY --from=builder /app/dist ./dist

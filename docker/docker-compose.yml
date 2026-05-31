@@ -1,0 +1,18 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_API_IMAGE: ${VITE_API_IMAGE}
+        VITE_API_KEY: ${VITE_API_KEY}
+    container_name: edugreen-web
+    environment:
+      - PORT=${PORT:-3000}
+    networks:
+      - edugreen
+
+networks:
+  edugreen:
+    external: true
