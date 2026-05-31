@@ -124,6 +124,14 @@ export default function LoginPage() {
                   >
                     Contraseña
                   </InputField>
+                  <div className="flex justify-end">
+                    <Link
+                      to="/access/forgot-password"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Link>
+                  </div>
                 </Column>
                 <Column className="gap-2">
                   <Button type="submit">Iniciar sesión</Button>

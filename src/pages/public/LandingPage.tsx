@@ -1,13 +1,17 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import ChallengeCard, { ChallengeCardSkeleton } from "../../components/cards/ChallengeCard";
 import ButtonLink from "../../components/controls/ButtonLink";
 import Page from "../../components/layouts/Page";
 import { LogoWithTextColored } from "../../components/Logo";
 import Column from "../../components/placing/Column";
 import Row from "../../components/placing/Row";
-import { getRoute } from "../../utils/RouteUtils";
 import Section from "../../components/placing/Section";
 import useAuth from "@contexts/AccessContext";
 import { UserMenu } from "../../components/auth/UserMenu";
+import ChallengeService, { type ChallengeData } from "../../services/ChallengeService";
+import UserClassService from "../../services/UserClassService";
+import { getRoute } from "../../utils/RouteUtils";
 
 export default function LandingPage() {
   return (
@@ -277,56 +281,36 @@ function HowItWorksSection() {
   );
 }
 
-type ChallengePreviewCardProps = {
-  tag: string;
-  title: string;
-  participants: number;
-  difficulty: "Fácil" | "Medio" | "Difícil";
-  progress: number;
-};
-
-function ChallengePreviewCard({
-  tag,
-  title,
-  participants,
-  difficulty,
-  progress,
-}: ChallengePreviewCardProps) {
-  const difficultyColor =
-    difficulty === "Fácil"
-      ? "text-green-600 bg-green-50 border-green-100"
-      : difficulty === "Medio"
-        ? "text-yellow-600 bg-yellow-50 border-yellow-100"
-        : "text-red-600 bg-red-50 border-red-100";
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4 flex-1 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-      <Row className="justify-between items-center">
-        <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/15">
-          {tag}
-        </span>
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${difficultyColor}`}>
-          {difficulty}
-        </span>
-      </Row>
-      <h3 className="font-semibold text-base leading-snug">{title}</h3>
-      <div className="mt-auto">
-        <div className="flex justify-between text-xs text-secondary mb-1.5">
-          <span>{participants} participantes</span>
-          <span className="font-medium text-primary">{progress}%</span>
-        </div>
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ChallengesPreviewSection() {
+  const auth = useAuth();
+  const [challenges, setChallenges] = useState<ChallengeData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const { id, sessionToken } = auth?.auth ?? {};
+    if (!id || !sessionToken) {
+      setIsLoading(false);
+      return;
+    }
+
+    const load = async () => {
+      try {
+        const classesRes = await UserClassService.getClassesByUser(id, sessionToken);
+        const classes = classesRes.data ?? [];
+        if (classes.length === 0) return;
+
+        const items = await ChallengeService.getByClass(classes[0].id, sessionToken);
+        setChallenges((Array.isArray(items) ? items : []).slice(0, 3));
+      } catch {
+        // silently fail
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
+  }, [auth?.auth?.sessionToken]);
+
   return (
     <Section className="py-24 bg-[#f6f8f6]" containerClassName="gap-12">
       <Row className="justify-between items-end w-full">
@@ -346,28 +330,34 @@ function ChallengesPreviewSection() {
           Ver todos →
         </Link>
       </Row>
-      <div className="flex flex-col sm:flex-row gap-6 w-full">
-        <ChallengePreviewCard
-          tag="Energía"
-          title="Diseña un plan de eficiencia energética para tu colegio"
-          participants={342}
-          difficulty="Medio"
-          progress={68}
-        />
-        <ChallengePreviewCard
-          tag="Residuos"
-          title="Propón un sistema de reciclaje para tu barrio"
-          participants={198}
-          difficulty="Fácil"
-          progress={45}
-        />
-        <ChallengePreviewCard
-          tag="Biodiversidad"
-          title="Analiza el impacto de la deforestación local"
-          participants={87}
-          difficulty="Difícil"
-          progress={23}
-        />
+      <div className="flex flex-col sm:flex-row gap-6 w-full justify-center">
+        {isLoading || challenges.length === 0 ? (
+          <>
+            <ChallengeCardSkeleton />
+            <ChallengeCardSkeleton />
+            <ChallengeCardSkeleton />
+          </>
+        ) : (
+          challenges.map((c) => (
+            <ChallengeCard
+              key={c.id}
+              imageSrc={
+                c.image
+                  ? `${import.meta.env.VITE_API_IMAGE}${c.image}`
+                  : `https://picsum.photos/seed/${c.id}/400/225`
+              }
+              typeOfChallenge="Reto"
+              title={c.name}
+              points={c.points}
+              classProgress={0}
+              participants={c.participants}
+              link={`/challenge/${c.id}`}
+              tag="Reto destacado"
+            >
+              {c.description ?? "Completa este reto y suma puntos a tu clase."}
+            </ChallengeCard>
+          ))
+        )}
       </div>
     </Section>
   );

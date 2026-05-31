@@ -16,6 +16,7 @@ import AdminPanelPage from "./private/AdminPanelPage";
 import TeacherPanelPage from "./private/TeacherPanelPage";
 import ConfigurationPage from "./private/ConfigurationPage";
 import ChallengeDetailPage from "./private/ChallengeDetailPage";
+import ForgotPasswordPage from "./private/ForgotPasswordPage";
 
 export type RouteConfig = {
   name: string;
@@ -104,6 +105,12 @@ const siteMap: RouteConfig[] = [
     path: "/access/login",
     name: "login",
     component: <LoginPage />,
+    guestOnly: true,
+  },
+  {
+    path: "/access/forgot-password",
+    name: "forgot-password",
+    component: <ForgotPasswordPage />,
     guestOnly: true,
   },
   { path: "/policies/privacy", name: "privacy", component: <PrivacyPage /> },
