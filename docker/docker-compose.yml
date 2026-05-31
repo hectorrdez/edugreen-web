@@ -7,7 +7,7 @@ services:
         VITE_API_URL: ${VITE_API_URL}
         VITE_API_IMAGE: ${VITE_API_IMAGE}
         VITE_API_KEY: ${VITE_API_KEY}
-    container_name: edugreen-web
+    container_name: edugreen-pro-web
     environment:
       - PORT=${PORT:-3000}
     networks:
