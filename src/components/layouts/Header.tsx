@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { IconLogout, IconSettings, IconUser } from "@tabler/icons-react";
 import Button from "../controls/Button";
 import { LogoWithText } from "../Logo";
 import ButtonOutlined from "../controls/ButtonOutlined";
+import useAuth from "@contexts/AccessContext";
+import useUser from "@contexts/UserContext";
+import { UserMenu } from "../auth/UserMenu";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,14 +31,9 @@ export default function Header() {
           </ul>
         </nav>
 
-        {/* Auth buttons — flex-1 right — desktop only */}
+        {/* Auth area — flex-1 right — desktop only */}
         <div className="hidden md:flex flex-1 justify-end gap-2">
-          <Link to="/access/login">
-            <ButtonOutlined>Iniciar Sesión</ButtonOutlined>
-          </Link>
-          <Link to="/access/register">
-            <Button>Registrarse</Button>
-          </Link>
+          <AuthArea />
         </div>
 
         {/* Hamburger — mobile only */}
@@ -65,13 +64,8 @@ export default function Header() {
             <MobileHeaderLink to="/ranking" onNavigate={() => setIsOpen(false)}>Ranking</MobileHeaderLink>
             <MobileHeaderLink to="/media" onNavigate={() => setIsOpen(false)}>Recursos</MobileHeaderLink>
           </ul>
-          <div className="flex flex-col gap-2 mt-6">
-            <Link to="/access/login" onClick={() => setIsOpen(false)}>
-              <ButtonOutlined className="w-full justify-center">Iniciar Sesión</ButtonOutlined>
-            </Link>
-            <Link to="/access/register" onClick={() => setIsOpen(false)}>
-              <Button className="w-full justify-center">Registrarse</Button>
-            </Link>
+          <div className="mt-6">
+            <MobileAuthArea onNavigate={() => setIsOpen(false)} />
           </div>
         </div>
       )}
@@ -113,6 +107,103 @@ function MobileHeaderLink({ children, to, onNavigate }: MobileHeaderLinkProps) {
         onClick={onNavigate}
         className={`font-semibold text-lg transition-colors ${isActive ? "text-white" : "text-header hover:text-white"}`}
       >
+        {children}
+      </Link>
+    </li>
+  );
+}
+
+// ── Auth area ──────────────────────────────────────────────────────────────────
+
+function AuthArea() {
+  const auth = useAuth();
+  if (auth?.auth) return <UserMenu variant="dark" />;
+  return (
+    <>
+      <Link to="/access/login">
+        <ButtonOutlined>Iniciar Sesión</ButtonOutlined>
+      </Link>
+      <Link to="/access/register">
+        <Button>Registrarse</Button>
+      </Link>
+    </>
+  );
+}
+
+// ── Mobile auth area ───────────────────────────────────────────────────────────
+
+type MobileAuthAreaProps = { onNavigate: () => void };
+
+function MobileAuthArea({ onNavigate }: MobileAuthAreaProps) {
+  const auth = useAuth();
+  const { user } = useUser()!;
+  const { setAuth } = auth!;
+  const navigate = useNavigate();
+
+  if (!auth?.auth) {
+    return (
+      <div className="flex flex-col gap-2">
+        <Link to="/access/login" onClick={onNavigate}>
+          <ButtonOutlined className="w-full justify-center">Iniciar Sesión</ButtonOutlined>
+        </Link>
+        <Link to="/access/register" onClick={onNavigate}>
+          <Button className="w-full justify-center">Registrarse</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  function handleLogout() {
+    setAuth(null);
+    onNavigate();
+    navigate("/");
+  }
+
+  return (
+    <div className="border-t border-white/10 pt-4">
+      <div className="flex items-center gap-3 mb-4">
+        <span className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-black text-sm font-bold shrink-0">
+          {user ? `${user.name.charAt(0)}${user.lastName.charAt(0)}` : "?"}
+        </span>
+        <span className="text-white font-semibold truncate">
+          {user ? `${user.name} ${user.lastName}` : "…"}
+        </span>
+      </div>
+      <ul className="flex flex-col gap-3 text-white">
+        <MobileDropdownLink to="/profile" icon={<IconUser size={16} />} onNavigate={onNavigate}>
+          Perfil
+        </MobileDropdownLink>
+        <MobileDropdownLink to="/settings" icon={<IconSettings size={16} />} onNavigate={onNavigate}>
+          Configuración
+        </MobileDropdownLink>
+      </ul>
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-2.5 mt-4 text-red-400 font-semibold"
+      >
+        <IconLogout size={16} />
+        Cerrar sesión
+      </button>
+    </div>
+  );
+}
+
+type MobileDropdownLinkProps = {
+  to: string;
+  icon: React.ReactNode;
+  onNavigate: () => void;
+  children: string;
+};
+
+function MobileDropdownLink({ to, icon, onNavigate, children }: MobileDropdownLinkProps) {
+  return (
+    <li>
+      <Link
+        to={to}
+        onClick={onNavigate}
+        className="flex items-center gap-2.5 font-semibold text-header hover:text-white transition-colors"
+      >
+        {icon}
         {children}
       </Link>
     </li>

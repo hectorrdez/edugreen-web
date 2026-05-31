@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EduGreen Logo — Email Asset</title>
+  <style>
+    /* Preview page wrapper — remove when embedding in email */
+    body {
+      margin: 0;
+      padding: 40px;
+      background: #e8ebe8;
+      font-family: Arial, sans-serif;
+    }
+    .preview-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 480px;
+    }
+    .preview-label {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 12px;
+    }
+    .preview-box {
+      padding: 28px 32px;
+      border-radius: 8px;
+    }
+    .preview-box--light { background: #ffffff; }
+    .preview-box--dark  { background: #0a1f0d; }
+
+    /* ─── LOGO — copy everything below this line into your email ─── */
+    .eg-logo {
+      display: inline-block;
+      line-height: 0;
+    }
+    .eg-logo__cell-icon {
+      vertical-align: middle;
+      padding-right: 5px;
+    }
+    .eg-logo__cell-text {
+      vertical-align: middle;
+    }
+    .eg-logo__text {
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+    .eg-logo__text--light { color: #111111; }
+    .eg-logo__text--dark  { color: #ffffff; }
+    /* ─── END LOGO ─── */
+  </style>
+</head>
+<body>
+
+<div class="preview-wrap">
+
+  <!-- Light background variant -->
+  <div class="preview-box preview-box--light">
+    <p class="preview-label">Light background</p>
+
+    <table class="eg-logo" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td class="eg-logo__cell-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="22" height="22" style="display:block;">
+            <path fill="#12ea36" d="M25 7C25 7 13 7 9 11C5 15 5 25 5 25C5 25 15 25 19 21C23 17 25 7 25 7Z"/>
+            <path stroke="#07701a" stroke-width="2" stroke-linecap="round" fill="none" d="M5 25L19 11"/>
+          </svg>
+        </td>
+        <td class="eg-logo__cell-text">
+          <span class="eg-logo__text eg-logo__text--light">EduGreen</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Dark background variant -->
+  <div class="preview-box preview-box--dark">
+    <p class="preview-label" style="color:#556;">Dark background</p>
+
+    <table class="eg-logo" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td class="eg-logo__cell-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="22" height="22" style="display:block;">
+            <path fill="#12ea36" d="M25 7C25 7 13 7 9 11C5 15 5 25 5 25C5 25 15 25 19 21C23 17 25 7 25 7Z"/>
+            <path stroke="#07701a" stroke-width="2" stroke-linecap="round" fill="none" d="M5 25L19 11"/>
+          </svg>
+        </td>
+        <td class="eg-logo__cell-text">
+          <span class="eg-logo__text eg-logo__text--dark">EduGreen</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+</body>
+</html>

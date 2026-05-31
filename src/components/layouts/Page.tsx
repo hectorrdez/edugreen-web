@@ -5,12 +5,12 @@ import Header from "./Header";
 
 type PageProps = {
   children: ReactNode;
-  customHeader?: boolean;
+  header?: ReactNode;
   className?: string;
 };
 
 export default function Page({
-  customHeader = false,
+  header = <Header />,
   children,
   className = "",
 }: PageProps) {
@@ -20,7 +20,7 @@ export default function Page({
   );
   return (
     <>
-      {!customHeader && <Header />}
+      {header}
       <main className={newClassName}>{children}</main>
       <Footer />
     </>

@@ -50,3 +50,28 @@ export function LogoWithText({
     </Row>
   );
 }
+
+export function LogoWithTextColored({
+  className = "",
+  textClassName = "",
+  iconClassName,
+  ...props
+}: LogoWithTextProps) {
+  const newRowClassName = StringUtils.JoinClassName(
+    "items-center gap-1",
+    className,
+  );
+  const newTextClassName = StringUtils.JoinClassName(
+    "text-xl font-semibold",
+    textClassName,
+  );
+  return (
+    <Row className={newRowClassName} {...props}>
+      <Logo className={iconClassName} size={20} />
+      <span className={newTextClassName}>
+        <span>Edu</span>
+        <span>Green</span>
+      </span>
+    </Row>
+  );
+}
