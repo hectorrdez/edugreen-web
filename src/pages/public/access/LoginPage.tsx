@@ -1,3 +1,15 @@
+import Card from "@components/cards/Card";
+import Button from "@components/controls/Button";
+import ButtonSecondary from "@components/controls/ButtonSecondary";
+import InputField from "@components/inputs/InputField";
+import AccessHeader from "@components/layouts/AccessHeader";
+import Page from "@components/layouts/Page";
+import { useNotification } from "@components/notifications/useNotification";
+import Column from "@components/placing/Column";
+import Row from "@components/placing/Row";
+import useAuth from "@contexts/AccessContext";
+import AccessService from "@services/AccessService";
+import type { AccessCredentials } from "@services/AccessService";
 import {
   IconLock,
   IconMail,
@@ -7,25 +19,20 @@ import {
   IconUserPlus,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import Card from "../../../components/cards/Card";
-import Button from "../../../components/controls/Button";
-import InputField from "../../../components/inputs/InputField";
-import AccessHeader from "../../../components/layouts/AccessHeader";
-import Page from "../../../components/layouts/Page";
-import Column from "../../../components/placing/Column";
-import Row from "../../../components/placing/Row";
-import ButtonSecondary from "../../../components/controls/ButtonSecondary";
-import { Link } from "react-router-dom";
-import { useNotification } from "../../../components/notifications/useNotification";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const { notify } = useNotification();
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: Location })?.from?.pathname ?? "/";
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!formData.username || !formData.password) {
@@ -37,29 +44,47 @@ export default function LoginPage() {
       return;
     }
 
-    // TODO: llamada real a la API de autenticación
-    notify({
-      variant: "success",
-      title: "Sesión iniciada",
-      message: "Bienvenido de nuevo. Cargando tu perfil…",
-    });
+    try {
+      const credentials: AccessCredentials = {
+        email: formData.username,
+        password: formData.password,
+      };
+      const data = await AccessService.login(credentials);
+      auth?.setAuth({
+        id: data.id,
+        sessionToken: data.sessionToken,
+        refreshToken: data.refreshToken,
+        role: data.role,
+      });
+      notify({
+        variant: "success",
+        title: "Sesión iniciada",
+        message: "Bienvenido de nuevo. Cargando tu perfil…",
+      });
+      navigate(from, { replace: true });
+    } catch (error) {
+      notify({
+        variant: "error",
+        title: "Error al iniciar sesión",
+        message: error instanceof Error ? error.message : "Inténtalo de nuevo.",
+      });
+    }
   };
 
   return (
     <Page
-      customHeader
+      header={<AccessHeader />}
       className="flex flex-col justify-between items-center py-10 px-4"
     >
-      <AccessHeader />
       <Column className="items-center gap-8 w-full">
-        <section className="text-center space-y-2">
+        <section className="text-center">
           <h1 className="text-3xl font-bold">Únete al cambio</h1>
           <p className="text-secondary">
             Aprende, juega y transforma el planeta. Tu viaje a la sostenibilidad
             comienza aquí.
           </p>
         </section>
-        <Card className="w-full max-w-sm">
+        <Card className="w-full max-w-md">
           <div className="space-y-5">
             <div className="space-y-1">
               <Row className="justify-between items-center">
