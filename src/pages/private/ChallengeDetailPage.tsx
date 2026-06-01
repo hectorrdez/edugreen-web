@@ -413,7 +413,7 @@ export default function ChallengeDetailPage() {
   async function handleRemove(m: MemberRow) {
     if (!id || !auth?.auth?.sessionToken) return;
     setMemberLoading(m.user_id, true);
-    const wasCompleted = m.completed_at !== null;
+    //const wasCompleted = m.completed_at !== null;
 
     setMembers((prev) => prev.filter((r) => r.user_id !== m.user_id));
     setChallenge((prev) =>
